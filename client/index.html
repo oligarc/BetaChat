@@ -1,49 +1,104 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>426Comics Beta Chat</title>
-    <link rel="stylesheet" href="style.css">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Register page</title>
+    <link rel="stylesheet" href="styleslogin.css" />
     <script type="module">
 
-        import {io} from "https://cdn.socket.io/4.3.2/socket.io.esm.min.js";
-        
-        const socket = io({
-            auth:{
-                serverOffset:0
-            }
-        });
 
-        const form = document.getElementById('form');
-        const input = document.getElementById('message');
-        const messages = document.getElementById('messages');
+      const signUpButton = document.getElementById("signUp");
+      const signInButton = document.getElementById("signIn");
+      const container = document.getElementById("container");
+      const registerForm = document.getElementById("registerForm");
+      const logInForm = document.getElementById("loginForm");
 
-        socket.on('chat message', (msg,serverOffset) => {
-            const item=`<li>${msg}</li>`
-            messages.insertAdjacentHTML('beforeend', item);
-            socket.auth.serverOffset=serverOffset; //Updating the last message the client has seen
+
+      signUpButton.addEventListener("click", () => {
+        container.classList.add("right-panel-active");
+      });
+
+      signInButton.addEventListener("click", () => {
+        container.classList.remove("right-panel-active");
+      });
+
+      registerForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const name = document.getElementById('registerName').value;
+        const email = document.getElementById('registerEmail').value;
+        const password = document.getElementById('registerPassword').value;
+
+        const res = await fetch('/register', {
+          method:"POST",
+          headers: {"Content-Type" : "application/json"},
+          body: JSON.stringify({name,email,password})
         })
 
-        form.addEventListener('submit', (e) => {
-            e.preventDefault();
+        const data = await res.json();
+        alert(data.message);
+        if(res.ok){
+          localStorage.setItem('userId', data.id)
+          window.location.href="chat.html"
+        }
 
-            if(input.value){
-                socket.emit('chat message', input.value);
-                input.value='';
-            }
+      })
+
+      logInForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('loginEmail').value;
+        const password = document.getElementById('loginPassword').value;
+
+        const res = await fetch('/login', {
+          method:"POST",
+          headers: {"Content-Type" : "application/json"},
+          body: JSON.stringify({email,password})
         })
 
+        const data = await res.json();
+        alert(data.message);
+        if(res.ok){
+          localStorage.setItem('userId', data.id)
+          window.location.href="chat.html"
+        }
+      })
     </script>
-</head>
-<body>
-    <section id="chat">
-        <ul id="messages"></ul>
-    <form id="form">
-        <input type="text" name="message" id="message" placeholder="Manda un mensaje">
-        <button id="button">Enviar</button>
-    </form>
-    </section>
-    
-</body>
+  </head>
+  <body>
+    <h2>Nice to see you</h2>
+    <div class="container" id="container">
+      <div class="form-container sign-up-container">
+        <form id="registerForm">
+          <input type="text" placeholder="Name" id="registerName" />
+          <input type="email" placeholder="Email" id="registerEmail" />
+          <input type="password" placeholder="Password" id="registerPassword" />
+          <button>Sign Up</button>
+        </form>
+      </div>
+      <div class="form-container sign-in-container">
+        <form id="loginForm">
+          <h1>Sign in</h1>
+          <input type="email" placeholder="Email" id="loginEmail" />
+          <input type="password" placeholder="Password" id="loginPassword" />
+          <button>Sign In</button>
+        </form>
+      </div>
+      <div class="overlay-container">
+        <div class="overlay">
+          <div class="overlay-panel overlay-left">
+            <h1>Welcome Back!</h1>
+            <p>
+              To keep connected with us please login with your personal info
+            </p>
+            <button class="ghost" id="signIn">Sign In</button>
+          </div>
+          <div class="overlay-panel overlay-right">
+            <h1>Hello, Friend!</h1>
+            <p>Enter your personal details and start journey with us</p>
+            <button class="ghost" id="signUp">Sign Up</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
 </html>
