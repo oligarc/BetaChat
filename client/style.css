@@ -1,0 +1,91 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  display: grid;
+  place-content: center;
+  height: 100vh;
+  padding: 36px;
+  background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+  font-family: Arial, sans-serif;
+}
+
+#chat {
+  width: 500px;
+  height: 600px;
+  background-color: white;
+  border-radius: 16px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+#messages-container {
+  height: 100%;
+  overflow-y: auto;
+  padding: 20px;
+  padding-bottom: 80px;
+}
+
+form {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  gap: 10px;
+  padding: 15px 20px;
+  background: #fafafa;
+  border-top: 1px solid #ddd;
+}
+
+#message {
+  flex: 1;
+  padding: 15px;
+  border-radius: 20px;
+  background-color: #f1f1f1;
+  font-size: 16px;
+  border: none;
+  outline: none;
+}
+
+form > button {
+  color: white;
+  background: linear-gradient(135deg, #05f584, #06d6a0);
+  padding: 12px 20px;
+  cursor: pointer;
+  border-radius: 12px;
+  border: none;
+  font-weight: bold;
+  font-size: 16px;
+  transition: transform 0.2s, background 0.3s;
+}
+
+form > button:hover {
+  transform: scale(1.05);
+  background: linear-gradient(135deg, #06d6a0, #05f584);
+}
+
+#messages{
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+}
+
+#messages > li{
+  color: white;
+  padding: .5rem 1rem;
+  font-weight: bold;
+}
+
+#messages > li:nth-child(odd){
+  background: #06d6a0;
+}
+
+#messages > li:nth-child(even){
+  background-color: #05f584;
+}
