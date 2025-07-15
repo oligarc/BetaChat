@@ -3,8 +3,9 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Register page</title>
+    <title>Welcome page</title>
     <link rel="stylesheet" href="styleslogin.css" />
+    <link rel="icon" type="image/svg" href="/icons/usuario.svg"/>
     <script type="module">
 
 
@@ -59,6 +60,7 @@
         alert(data.message);
         if(res.ok){
           localStorage.setItem('userId', data.id)
+          localStorage.setItem('userName', data.name)
           window.location.href="chat.html"
         }
       })

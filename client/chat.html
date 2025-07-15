@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>426Comics Beta Chat</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/svg" href="icons/hogar.svg">
     <script type="module">
 
         import {io} from "https://cdn.socket.io/4.3.2/socket.io.esm.min.js";
@@ -19,11 +20,16 @@
         const input = document.getElementById('message');
         const messages = document.getElementById('messages');
         const userId = localStorage.getItem('userId');
+        const userName = localStorage.getItem('userName');
+        const pUser = document.getElementById('userName');
 
-        socket.on('chat message', (msg,serverOffset) => {
-            const item=`<li>${msg}</li>`
+        pUser.innerHTML=`${userName}`
+
+        socket.on('chat message', (msg) => {
+            const item=`<li><span>${msg.userName}: </span>${msg.content}</li>`
             messages.insertAdjacentHTML('beforeend', item);
-            socket.auth.serverOffset=serverOffset; //Updating the last message the client has seen
+            socket.auth.serverOffset=msg.serverOffset; //Updating the last message the client has seen
+            messages.scrollTop = messages.scrollHeight; //This will automatically scroll instead having you to do it
         })
 
         form.addEventListener('submit', (e) => {
@@ -38,11 +44,14 @@
     </script>
 </head>
 <body>
+    <header>
+        <p id="userName"></p>
+    </header>
     <section id="chat">
         <ul id="messages"></ul>
     <form id="form">
         <input type="text" name="message" id="message" placeholder="Manda un mensaje">
-        <button id="button">Enviar</button>
+        <button id="button"><img src="/icons/send.svg" alt="sendButton"></button>
     </form>
     </section>
     

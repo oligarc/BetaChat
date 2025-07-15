@@ -16,7 +16,11 @@ const db = createClient({
   authToken: process.env.DB_TOKEN,
 });
 
-// I used this just to modify the database and include users await db.execute(`DROP TABLE messages`)
+app.use(logger("dev"));
+app.use(express.static(process.cwd() + "/client")); //You need to tell Express to load static files from the client, either way CSS won't load at all
+app.use(express.json());
+
+//await db.execute(`DROP TABLE messages`) I used this just to modify the database and include users
 
 await db.execute(`
     CREATE TABLE IF NOT EXISTS messages(
@@ -34,10 +38,6 @@ await db.execute(`
     email TEXT,
     password TEXT)`);
 
-app.use(logger("dev"));
-app.use(express.static(process.cwd() + "/client")); //You need to tell Express to load static files from the client, either way CSS won't load at all
-app.use(express.json());
-
 io.on("connection", async (socket) => {
   //socket is the client connection
   console.log("An user has connected!");
@@ -46,28 +46,58 @@ io.on("connection", async (socket) => {
     let result;
     const { content, userId } = msg;
     try {
+      const numericUserId = Number(msg.userId);
+
+      if (!numericUserId || isNaN(numericUserId)) {
+        console.error("Invalid userId", userId);
+        return;
+      }
+
+      const userResult = await db.execute({
+        sql: "SELECT name FROM users WHERE id = ?",
+        args: [numericUserId],
+      });
+
+      if (!userResult.rows || userResult.rows.length === 0) {
+        console.error("userId not found:", numericUserId);
+        return;
+      }
+
+      const userName = userResult.rows[0].name;
+
       const fecha = new Date().toISOString();
       result = await db.execute({
         sql: `INSERT INTO messages(content,fecha,user_id) VALUES (?,?,?)`,
-        args: [content, fecha, userId],
+        args: [content, fecha, numericUserId],
       });
+
+      io.emit("chat message", {
+        content: msg.content,
+        userName: userName,
+        serverOffset: result.lastInsertRowid.toString(),
+      }); //Server broadcast message. We're returning the last message's id to the client
     } catch (error) {
       console.error(error);
       return;
     }
-    io.emit("chat message", content, result.lastInsertRowid.toString()); //Server broadcast message. We're returning the last message's id to the client
   });
 
   if (!socket.recovered) {
     //To see if client received the most recent messages
+    //Now we need to make a Join
     try {
       const results = await db.execute({
-        sql: `SELECT * FROM messages where id > ?`,
+        sql: `
+        SELECT m.content, m.fecha, m.id, u.name as userName
+        FROM messages m
+        JOIN users u ON m.user_id=u.id
+        WHERE m.id > ?
+        ORDER BY m.id ASC`,
         args: [socket.handshake.auth.serverOffset ?? 0], //Id that comes from client. Note that instead of socket.auth we are using socket.handshake.auth and that's because server receives it from handshake
       });
 
       results.rows.forEach((row) => {
-        socket.emit("chat message", row.content, row.fecha, row.id.toString());
+        socket.emit("chat message", {content: row.content, userName: row.userName, fecha: row.fecha, serverOffset: row.id.toString()});
       });
     } catch (error) {
       console.error(error);
@@ -80,6 +110,8 @@ io.on("connection", async (socket) => {
   });
 });
 
+//ENDPOINTS
+
 app.get("/", (req, res) => {
   res.sendFile(process.cwd() + "/client/index.html");
 });
@@ -87,6 +119,7 @@ app.get("/", (req, res) => {
 app.post("/register", async (req, res) => {
   const { name, email, password } = req.body;
   const exists = await db.execute({
+    //db.execute always come with rows
     sql: "SELECT id from users where email=?",
     args: [email],
   });
@@ -107,9 +140,31 @@ app.post("/register", async (req, res) => {
 
 //To create the login post
 
-app.post("/login", async (req,res) => {
-    const {email,password} = req.body;
-    
-})
+app.post("/login", async (req, res) => {
+  const { email, password } = req.body;
+
+  const result = await db.execute({
+    sql: "SELECT id,password, name FROM users WHERE email=?",
+    args: [email],
+  });
+
+  console.log("ESTO ES EL RESULT" + result);
+
+  const rows = result.rows;
+
+  if (rows.length === 0) {
+    return res.status(400).json({ message: "User not found" });
+  }
+
+  const dbPassword = rows[0].password;
+  const userName = rows[0].name;
+  const userId = rows[0].id;
+
+  if (dbPassword !== password) {
+    return res.status(400).json({ message: "Incorrect credentials" });
+  }
+
+  res.json({ message: "Acceso correcto", name: userName, id: userId });
+});
 
 server.listen(port, () => console.log("Server escuchando"));
