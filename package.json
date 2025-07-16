@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "node --watch ./server/index.js",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node index.js"
+    "start": "node src/index.js"
   },
   "dependencies": {
     "@libsql/client": "^0.15.9",
